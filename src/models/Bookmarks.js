@@ -1,0 +1,1 @@
+// id, user_id, item_type (video/section/quiz), item_id, created_at

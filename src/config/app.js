@@ -1,0 +1,1 @@
+// General app settings (ports, CORS, environment variables)

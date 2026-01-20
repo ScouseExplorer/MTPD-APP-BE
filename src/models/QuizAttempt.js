@@ -1,0 +1,1 @@
+//  id, user_id, quiz_id, score, total_questions, time_taken, completed_at

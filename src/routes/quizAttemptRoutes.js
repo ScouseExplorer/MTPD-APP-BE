@@ -1,0 +1,1 @@
+// /api/quiz-attempts/* (submit, history)

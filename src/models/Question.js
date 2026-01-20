@@ -1,0 +1,1 @@
+// id, quiz_id, question_text, option_a, option_b, option_c, option_d, correct_answer, explanation, image_url (optional)

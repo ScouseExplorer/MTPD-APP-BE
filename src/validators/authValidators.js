@@ -1,0 +1,1 @@
+// Validate registration, login inputs (email format, password strength)

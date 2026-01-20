@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Env and secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build and coverage outputs
+coverage/
+dist/
+build/
+.nyc_output/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Misc
+*.pid
+*.seed
+*.log

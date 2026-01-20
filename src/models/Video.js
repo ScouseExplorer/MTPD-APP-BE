@@ -1,0 +1,1 @@
+// id, title, description, video_url, thumbnail_url, duration, category_id, order_index

@@ -1,0 +1,1 @@
+// Get all sections, get section by ID, search sections, get by category

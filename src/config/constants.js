@@ -1,0 +1,1 @@
+// App-wide constants (quiz passing score, max attempts, etc.)

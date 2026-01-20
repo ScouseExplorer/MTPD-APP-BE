@@ -1,0 +1,1 @@
+// Check if user has access to a quiz (e.g., based on prerequisites, permissions)

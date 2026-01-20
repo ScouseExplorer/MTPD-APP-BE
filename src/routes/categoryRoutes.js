@@ -1,0 +1,1 @@
+//  /api/categories/* (get all categories)
