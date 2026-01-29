@@ -6,6 +6,7 @@ const morgan = require('morgan');
 
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
+const emailRoutes = require('./routes/emailRoutes');
 
 const app = express();
 app.use(helmet());
@@ -16,6 +17,7 @@ app.use(morgan('dev'));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/email', emailRoutes);
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
