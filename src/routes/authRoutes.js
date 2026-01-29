@@ -1,10 +1,11 @@
-// routes/authRoutes.js
-const express = require('express');
+import express from 'express';
+import { validateRequest } from '../middlewares/validateRequest.js';
+import { registerLimiter, loginLimiter, passwordResetLimiter } from '../middlewares/rateLimiter.js';
+import Joi from 'joi';
+import * as authController from '../controllers/authController.js';
+import { authenticate } from '../middlewares/authMiddleware.js';
+
 const router = express.Router();
-const { validateRequest } = require('../middlewares/validateRequest');
-const Joi = require('joi');
-const authService = require('../services/authService');
-const { authenticate } = require('../middlewares/authMiddleware');
 
 const signupSchema = Joi.object({
   email: Joi.string().email().required(),
@@ -17,31 +18,41 @@ const loginSchema = Joi.object({
   password: Joi.string().min(6).required()
 });
 
-// Signup
-router.post('/signup', validateRequest(signupSchema, 'body'), async (req, res) => {
-  try {
-    const { user, token } = await authService.register(req.body);
-    return res.status(201).json({ success: true, data: user, token });
-  } catch (err) {
-    const status = err.status || 500;
-    return res.status(status).json({ success: false, message: err.message, errors: err.details || null });
-  }
+const forgotPasswordSchema = Joi.object({
+  email: Joi.string().email().required()
 });
 
-// Login
-router.post('/login', validateRequest(loginSchema, 'body'), async (req, res) => {
-  try {
-    const { user, token } = await authService.login(req.body);
-    return res.json({ success: true, data: user, token });
-  } catch (err) {
-    const status = err.status || 500;
-    return res.status(status).json({ success: false, message: err.message, errors: err.details || null });
-  }
-});
+// Signup with rate limiting
+router.post('/signup', 
+  registerLimiter,
+  validateRequest(signupSchema, 'body'), 
+  authController.signup
+);
 
-// Protected current user
-router.get('/me', authenticate, async (req, res) => {
-  return res.json({ success: true, user: req.user });
-});
+// Login with rate limiting
+router.post('/login', 
+  loginLimiter,
+  validateRequest(loginSchema, 'body'), 
+  authController.login
+);
+
+// Logout
+router.post('/logout', authenticate, authController.logout);
+
+// Forgot password with rate limiting
+router.post('/forgot-password',
+  passwordResetLimiter,
+  validateRequest(forgotPasswordSchema, 'body'),
+  authController.forgotPassword
+);
+
+// Verify email
+router.get('/verify-email/:token', authController.verifyEmail);
+
+// Get current user
+router.get('/me', authenticate, authController.getCurrentUser);
+
+// Change password
+router.put('/change-password', authenticate, authController.changePassword);
 
 module.exports = router;

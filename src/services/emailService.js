@@ -1,4 +1,4 @@
-const { Resend } = require('resend');
+import { Resend } from 'resend';
 
 async function sendEmail({ to, subject, html, text, cc, bcc }) {
   if (!process.env.RESEND_API_KEY) {
