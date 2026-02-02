@@ -16,7 +16,12 @@ async function signup(req, res, next) {
             console.error('Welcome email failed:', emailError.message);
         }
         
-        return res.status(201).json({ success: true, data: result.user, token: result.token });
+        return res.status(201).json({ 
+            success: true, 
+            data: result.user, 
+            accessToken: result.accessToken,
+            refreshToken: result.refreshToken 
+        });
     } catch (error) {
         next(error);
     }
@@ -26,7 +31,12 @@ async function signup(req, res, next) {
 async function login(req, res, next) {
     try {
         const result = await authService.login(req.body);
-        return res.status(200).json({ success: true, data: result.user, token: result.token });
+        return res.status(200).json({ 
+            success: true, 
+            data: result.user, 
+            accessToken: result.accessToken,
+            refreshToken: result.refreshToken 
+        });
     } catch (error) {
         next(error);
     }
@@ -35,8 +45,17 @@ async function login(req, res, next) {
 
 async function logout(req, res, next) {
     try {
-        // In a stateless JWT system, logout is handled client-side by removing the token
-        // For enhanced security, you could blacklist the token in Redis here
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        const { refreshToken } = req.body;
+        
+        if (token) {
+            await authService.blacklistToken(token);
+        }
+        
+        if (refreshToken) {
+            await authService.revokeRefreshToken(refreshToken);
+        }
+        
         return res.status(200).json({ success: true, message: 'Logged out successfully' });
     } catch (error) {
         next(error);
@@ -45,8 +64,19 @@ async function logout(req, res, next) {
 
 async function refreshToken(req, res, next) {
     try {
-        // For now, return error as refresh tokens aren't implemented yet
-        return res.status(501).json({ success: false, message: 'Refresh tokens not implemented yet' });
+        const { refreshToken } = req.body;
+        
+        if (!refreshToken) {
+            return res.status(400).json({ success: false, message: 'Refresh token required' });
+        }
+        
+        const result = await authService.refreshTokens(refreshToken);
+        return res.status(200).json({ 
+            success: true, 
+            accessToken: result.accessToken,
+            refreshToken: result.refreshToken,
+            user: result.user 
+        });
     } catch (error) {
         next(error);
     }
@@ -55,19 +85,37 @@ async function refreshToken(req, res, next) {
 async function forgotPassword(req, res, next) {
     try {
         const { email } = req.body;
-        // TODO: Generate reset token and save to database
-        // For now, just send success response
-        return res.status(200).json({ success: true, message: 'Password reset email sent if account exists' });
+        
+        if (!email) {
+            return res.status(400).json({ success: false, message: 'Email is required' });
+        }
+        
+        await authService.initiatePasswordReset(email);
+        
+        // Always return success to prevent email enumeration
+        return res.status(200).json({ 
+            success: true, 
+            message: 'Password reset email sent if account exists' 
+        });
     } catch (error) {
-        next(error);
+        // Don't expose if user exists or not
+        return res.status(200).json({ 
+            success: true, 
+            message: 'Password reset email sent if account exists' 
+        });
     }
 }
 
 async function verifyEmail(req, res, next) {
     try {
         const { token } = req.params;
-        // TODO: Verify token and update user email verification status
-        return res.status(200).json({ success: true, message: 'Email verified successfully' });
+        
+        const result = await authService.verifyEmail(token);
+        return res.status(200).json({ 
+            success: true, 
+            message: 'Email verified successfully',
+            data: result.user 
+        });
     } catch (error) {
         next(error);
     }
@@ -84,8 +132,21 @@ async function getCurrentUser(req, res, next) {
 
 async function changePassword(req, res, next) {
     try {
-        // TODO: Implement password change in authService
-        return res.status(501).json({ success: false, message: 'Password change not implemented yet' });
+        const { currentPassword, newPassword } = req.body;
+        const userId = req.user.id;
+        
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Current password and new password are required' 
+            });
+        }
+        
+        await authService.changePassword(userId, currentPassword, newPassword);
+        return res.status(200).json({ 
+            success: true, 
+            message: 'Password changed successfully' 
+        });
     } catch (error) {
         next(error);
     }

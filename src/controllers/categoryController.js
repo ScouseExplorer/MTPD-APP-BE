@@ -1,12 +1,13 @@
-const express = require('express');
-const router = express.Router();
-const categoryService = require('../services/categoryService');
-const { validateRequest } = require('../middleware/validationMiddleware');
-const { authenticate, authorize } = require('../middleware/authMiddleware');
-const rateLimiter = require('../middleware/rateLimiter');
-const createError = require('http-errors');
-const logger = require('../utils/logger');
-const paginate = require('../utils/paginate');
+import express from 'express';
+const  router = express.Router();
+import categoryService from '../services/categoryService.js';
+import { validateRequest } from '../middleware/validationMiddleware.js';
+import { authenticate, authorize } from '../middleware/authMiddleware.js';
+import rateLimiter from '../middleware/rateLimiter.js';
+import createError from 'http-errors';
+import logger from '../utils/logger.js';
+import paginate from '../utils/paginate.js';
+import pg from '../config/database.js';
 
 
 async function getAllCategories(req, res, next) {
