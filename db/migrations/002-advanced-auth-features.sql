@@ -1,29 +1,26 @@
 -- Advanced Auth Tables
 
--- Email Verification Tokens
-CREATE TABLE email_verification_tokens (
+-- Password Reset Tokens (CREATE - this was missing!)
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
   id SERIAL PRIMARY KEY,
   user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
   token VARCHAR(255) UNIQUE NOT NULL,
   expires_at TIMESTAMP NOT NULL,
+  used BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Enhanced Password Reset Tokens (already exists but let's enhance)
-ALTER TABLE password_reset_tokens DROP CONSTRAINT IF EXISTS password_reset_tokens_user_id_fkey;
-ALTER TABLE password_reset_tokens ADD CONSTRAINT password_reset_tokens_user_id_fkey 
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
-
--- Refresh Tokens Table (enhance existing structure)
-ALTER TABLE refresh_tokens DROP CONSTRAINT IF EXISTS refresh_tokens_user_id_fkey;
-ALTER TABLE refresh_tokens ADD CONSTRAINT refresh_tokens_user_id_fkey 
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
+-- Refresh Tokens (CREATE - this was missing!)
+CREATE TABLE IF NOT EXISTS refresh_tokens (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  token TEXT UNIQUE NOT NULL,
+  expires_at TIMESTAMP NOT NULL,
+  revoked BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
 -- Add indexes for performance
-CREATE INDEX IF NOT EXISTS idx_email_verification_tokens_token ON email_verification_tokens(token);
-CREATE INDEX IF NOT EXISTS idx_email_verification_tokens_user_id ON email_verification_tokens(user_id);
-CREATE INDEX IF NOT EXISTS idx_email_verification_tokens_expires ON email_verification_tokens(expires_at);
-
 CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_token ON password_reset_tokens(token);
 CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_user_id ON password_reset_tokens(user_id);
 CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_expires ON password_reset_tokens(expires_at);
@@ -31,9 +28,14 @@ CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_expires ON password_reset_t
 CREATE INDEX IF NOT EXISTS idx_refresh_tokens_token ON refresh_tokens(token);
 CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user_id ON refresh_tokens(user_id);
 CREATE INDEX IF NOT EXISTS idx_refresh_tokens_expires ON refresh_tokens(expires_at);
+CREATE INDEX IF NOT EXISTS idx_refresh_tokens_revoked ON refresh_tokens(revoked);
+
+CREATE INDEX IF NOT EXISTS idx_email_verification_tokens_token ON email_verification_tokens(token);
+CREATE INDEX IF NOT EXISTS idx_email_verification_tokens_user_id ON email_verification_tokens(user_id);
+CREATE INDEX IF NOT EXISTS idx_email_verification_tokens_expires ON email_verification_tokens(expires_at);
 
 -- Security Audit Log
-CREATE TABLE security_audit_log (
+CREATE TABLE IF NOT EXISTS security_audit_log (
   id SERIAL PRIMARY KEY,
   user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
   event_type VARCHAR(50) NOT NULL, -- 'login', 'logout', 'password_change', 'failed_login', etc.
@@ -82,6 +84,28 @@ CREATE INDEX IF NOT EXISTS idx_user_sessions_expires ON user_sessions(expires_at
 -- Enhance users table with additional security fields
 DO $$ 
 BEGIN
+  -- Basic auth fields
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'role') THEN
+    ALTER TABLE users ADD COLUMN role VARCHAR(50) DEFAULT 'user';
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'google_id') THEN
+    ALTER TABLE users ADD COLUMN google_id VARCHAR(255) UNIQUE;
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'avatar') THEN
+    ALTER TABLE users ADD COLUMN avatar TEXT;
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'last_login') THEN
+    ALTER TABLE users ADD COLUMN last_login TIMESTAMP;
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'updated_at') THEN
+    ALTER TABLE users ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+  END IF;
+  
+  -- Security fields
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'is_email_verified') THEN
     ALTER TABLE users ADD COLUMN is_email_verified BOOLEAN DEFAULT FALSE;
   END IF;
@@ -106,6 +130,12 @@ BEGIN
     ALTER TABLE users ADD COLUMN two_factor_secret VARCHAR(255);
   END IF;
 END $$;
+
+-- Add indexes for user fields
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_google_id ON users(google_id);
+CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
+CREATE INDEX IF NOT EXISTS idx_users_is_account_locked ON users(is_account_locked);
 
 -- Clean up expired tokens periodically (you can run this as a cron job)
 -- DELETE FROM email_verification_tokens WHERE expires_at < NOW();
