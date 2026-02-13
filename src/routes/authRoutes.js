@@ -55,4 +55,4 @@ router.get('/me', authenticate, authController.getCurrentUser);
 // Change password
 router.put('/change-password', authenticate, authController.changePassword);
 
-module.exports = router;
+export default router;

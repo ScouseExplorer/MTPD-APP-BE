@@ -91,9 +91,7 @@ async function sendEmailVerification(userEmail, verificationToken, userName) {
   });
 }
 
-
-
-module.exports = { 
+export { 
   sendEmail,
   sendWelcomeEmail,
   sendPasswordResetEmail,

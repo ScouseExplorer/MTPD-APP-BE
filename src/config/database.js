@@ -1,4 +1,5 @@
-const { Pool } = require('pg');
+import pkg from 'pg';
+const { Pool } = pkg;
 
 const pool = new Pool({
   host: process.env.DB_HOST || 'localhost',
@@ -11,7 +12,5 @@ const pool = new Pool({
   max: 10,
 });
 
-module.exports = {
-  pool,
-  query: (text, params) => pool.query(text, params),
-};
+export { pool };
+export const query = (text, params) => pool.query(text, params);

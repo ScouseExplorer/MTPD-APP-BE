@@ -1,9 +1,11 @@
-const jwt = require('jsonwebtoken');
-require('dotenv').config();
+import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const JWT_SECRET = process.env.JWT_SECRET || 'change_this_secret';
 
-const authenticate = (req, res, next) => {
+export const authenticate = (req, res, next) => {
   try {
     const authHeader = req.headers.authorization || '';
     const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
@@ -20,12 +22,10 @@ const authenticate = (req, res, next) => {
   }
 };
 
-const authorize = (...roles) => (req, res, next) => {
+export const authorize = (...roles) => (req, res, next) => {
   const role = req.user?.role || 'user';
   if (!roles.includes(role)) {
     return res.status(403).json({ success: false, message: 'Forbidden' });
   }
   return next();
 };
-
-module.exports = { authenticate, authorize };

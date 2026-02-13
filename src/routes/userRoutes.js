@@ -1,10 +1,10 @@
 // /api/users/* (profile, settings, statistics)
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const userController = require('../controllers/usercontroller');
-const { authenticate, authorize } = require('../middlewares/authMiddleware');
-const { validateRequest } = require('../middlewares/validateRequest');
-const Joi = require('joi');
+import userController from '../controllers/userController.js';
+import { authenticate, authorize } from '../middlewares/authMiddleware.js';
+import { validateRequest } from '../middlewares/validateRequest.js';
+import Joi from 'joi';
 
 // Joi schemas
 const profileSchema = Joi.object({
@@ -53,4 +53,4 @@ router.delete('/:userId',
   userController.deleteUser
 );
 
-module.exports = router;
+export default router;

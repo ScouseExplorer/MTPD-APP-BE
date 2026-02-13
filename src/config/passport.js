@@ -1,6 +1,7 @@
-const passport = require('passport');
-const GoogleStrategy = require('passport-google-oauth20').Strategy;
-const db = require('./database');
+import passport from 'passport';
+import pkg from 'passport-google-oauth20';
+const { Strategy: GoogleStrategy } = pkg;
+import * as db from './database.js';
 
 passport.use(
   new GoogleStrategy(
@@ -66,4 +67,4 @@ passport.use(
   )
 );
 
-module.exports = passport;
+export default passport;

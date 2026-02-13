@@ -1,6 +1,6 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const { sendEmail } = require('../services/emailService');
+import { sendEmail } from '../services/emailService.js';
 
 // Simple test endpoint to trigger an email via Resend
 router.post('/test', async (req, res) => {
@@ -17,4 +17,4 @@ router.post('/test', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

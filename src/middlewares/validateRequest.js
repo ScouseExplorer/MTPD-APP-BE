@@ -1,6 +1,6 @@
-const Joi = require('joi');
+import Joi from 'joi';
 
-const validateRequest = (schema, property = 'body') => async (req, res, next) => {
+export const validateRequest = (schema, property = 'body') => async (req, res, next) => {
   try {
     const { error, value } = schema.validate(req[property], { abortEarly: false, stripUnknown: true });
     if (error) {
@@ -13,5 +13,3 @@ const validateRequest = (schema, property = 'body') => async (req, res, next) =>
     return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
-
-module.exports = { validateRequest };

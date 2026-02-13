@@ -1,7 +1,7 @@
 //  Global error handling middleware,
 //  catch all errors, format error responses
 
-const ResponseHandler = require('../utils/responseHandler');
+import ResponseHandler from '../utils/responseHandler.js';
 
 // 404 handler
 const notFoundHandler = (req, res, next) => {
@@ -42,7 +42,4 @@ const errorHandler = (err, req, res, next) => {
   ResponseHandler.error(res, message, statusCode);
 };
 
-module.exports = {
-  notFoundHandler,
-  errorHandler
-};
+export { notFoundHandler, errorHandler };

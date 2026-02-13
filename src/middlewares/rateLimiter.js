@@ -1,12 +1,12 @@
 //  Rate limiting middleware to prevent abuse and limit request rates
-const rateLimit = require('express-rate-limit');
-const RedisStore = require('rate-limit-redis');
-const redis = require('../config/redis');
+import rateLimit from 'express-rate-limit';
+import RedisStore from 'rate-limit-redis';
+import redis from '../config/redis.js';
 
 // Login rate limiter
 const loginLimiter = rateLimit({
   store: new RedisStore({
-    client: redis,
+    sendCommand: (...args) => redis.call(...args),
     prefix: 'rl:login:'
   }),
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -23,7 +23,7 @@ const loginLimiter = rateLimit({
 // Registration rate limiter
 const registerLimiter = rateLimit({
   store: new RedisStore({
-    client: redis,
+    sendCommand: (...args) => redis.call(...args),
     prefix: 'rl:register:'
   }),
   windowMs: 60 * 60 * 1000, // 1 hour
@@ -37,7 +37,7 @@ const registerLimiter = rateLimit({
 // Password reset rate limiter
 const passwordResetLimiter = rateLimit({
   store: new RedisStore({
-    client: redis,
+    sendCommand: (...args) => redis.call(...args),
     prefix: 'rl:reset:'
   }),
   windowMs: 60 * 60 * 1000, // 1 hour
@@ -51,7 +51,7 @@ const passwordResetLimiter = rateLimit({
 // General API rate limiter
 const apiLimiter = rateLimit({
   store: new RedisStore({
-    client: redis,
+    sendCommand: (...args) => redis.call(...args),
     prefix: 'rl:api:'
   }),
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -62,7 +62,7 @@ const apiLimiter = rateLimit({
   }
 });
 
-module.exports = {
+export {
   loginLimiter,
   registerLimiter,
   passwordResetLimiter,

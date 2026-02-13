@@ -1,8 +1,8 @@
-const { User } = require('../models');
-const bcrypt = require('bcryptjs');
-const { successResponse, errorResponse } = require('../utils/responseHandler');
+import { User } from '../models/index.js';
+import bcrypt from 'bcryptjs';
+import ResponseHandler from '../utils/responseHandler.js';
 
-module.exports = {
+export default {
   // Get user profile
   getProfile: async (req, res) => {
     try {
@@ -12,7 +12,7 @@ module.exports = {
       return res.json({ success: true, data: user });
     } catch (error) {
       console.error('Get profile error:', error);
-      return errorResponse(res, 'Failed to get profile', 500);
+      return ResponseHandler.error(res, 'Failed to get profile', 500);
     }
   },
 
@@ -25,7 +25,7 @@ module.exports = {
       if (email) {
         const existingUser = await User.findOne({ email, id: { $ne: req.user.id } });
         if (existingUser) {
-          return errorResponse(res, 'Email already in use', 400);
+          return ResponseHandler.badRequest(res, 'Email already in use');
         }
       }
 
@@ -37,7 +37,7 @@ module.exports = {
       return res.json({ success: true, data: updatedUser });
     } catch (error) {
       console.error('Update profile error:', error);
-      return errorResponse(res, 'Failed to update profile', 500);
+      return ResponseHandler.error(res, 'Failed to update profile', 500);
     }
   },
 
@@ -49,17 +49,16 @@ module.exports = {
 
       // Check if user has a password (OAuth users might not)
       if (!user.password) {
-        return errorResponse(
+        return ResponseHandler.badRequest(
           res,
-          'This account uses Google Sign-In and cannot change password',
-          400
+          'This account uses Google Sign-In and cannot change password'
         );
       }
 
       // Verify current password
       const isValidPassword = await bcrypt.compare(currentPassword, user.password || '');
       if (!isValidPassword) {
-        return errorResponse(res, 'Current password is incorrect', 401);
+        return ResponseHandler.unauthorized(res, 'Current password is incorrect');
       }
 
       // Hash new password
@@ -71,7 +70,7 @@ module.exports = {
       return res.json({ success: true, message: 'Password updated' });
     } catch (error) {
       console.error('Change password error:', error);
-      return errorResponse(res, 'Failed to change password', 500);
+      return ResponseHandler.error(res, 'Failed to change password', 500);
     }
   },
 
@@ -83,7 +82,7 @@ module.exports = {
       return res.json({ success: true, message: 'Account deleted' });
     } catch (error) {
       console.error('Delete account error:', error);
-      return errorResponse(res, 'Failed to delete account', 500);
+      return ResponseHandler.error(res, 'Failed to delete account', 500);
     }
   },
 
@@ -95,7 +94,7 @@ module.exports = {
       return res.json({ success: true, data: sanitized });
     } catch (error) {
       console.error('Get all users error:', error);
-      return errorResponse(res, 'Failed to get users', 500);
+      return ResponseHandler.error(res, 'Failed to get users', 500);
     }
   },
 
@@ -107,13 +106,13 @@ module.exports = {
 
       const validRoles = ['user', 'admin', 'moderator'];
       if (!validRoles.includes(role)) {
-        return errorResponse(res, 'Invalid role', 400);
+        return ResponseHandler.badRequest(res, 'Invalid role');
       }
 
       // Check if user exists
       const userCheck = await User.findOne({ id: userId });
       if (!userCheck) {
-        return errorResponse(res, 'User not found', 404);
+        return ResponseHandler.notFound(res, 'User not found');
       }
 
       // Update role
@@ -122,7 +121,7 @@ module.exports = {
       return res.json({ success: true, message: 'Role updated' });
     } catch (error) {
       console.error('Update user role error:', error);
-      return errorResponse(res, 'Failed to update user role', 500);
+      return ResponseHandler.error(res, 'Failed to update user role', 500);
     }
   },
 
@@ -133,31 +132,31 @@ module.exports = {
 
       // Prevent self-deletion
       if (userId === req.user.id.toString()) {
-        return errorResponse(res, 'Cannot delete your own account', 400);
+        return ResponseHandler.badRequest(res, 'Cannot delete your own account');
       }
 
       // Check if user exists
       const userCheck = await User.findOne({ id: userId });
       if (!userCheck) {
-        return errorResponse(res, 'User not found', 404);
+        return ResponseHandler.notFound(res, 'User not found');
       }
 
       // Delete user
       await User.deleteOne({ id: userId });
 
-      return successResponse(res, null, 200, 'User deleted successfully');
+      return ResponseHandler.success(res, null, 'User deleted successfully', 200);
     } catch (error) {
       console.error('Delete user error:', error);
-      return errorResponse(res, 'Failed to delete user', 500);
+      return ResponseHandler.error(res, 'Failed to delete user', 500);
     }
   },
 
   // GET /api/users
   getUsers: async (req, res) => {
     try {
-      return successResponse(res, { users: [] }, 200, 'Users fetched');
+      return ResponseHandler.success(res, { users: [] }, 'Users fetched', 200);
     } catch (err) {
-      return errorResponse(res, 'Failed to fetch users', 500);
+      return ResponseHandler.error(res, 'Failed to fetch users', 500);
     }
   },
 
@@ -165,9 +164,9 @@ module.exports = {
   getUser: async (req, res) => {
     try {
       const { id } = req.params;
-      return successResponse(res, { user: { id } }, 200, 'User fetched');
+      return ResponseHandler.success(res, { user: { id } }, 'User fetched', 200);
     } catch (err) {
-      return errorResponse(res, 'Failed to fetch user', 500);
+      return ResponseHandler.error(res, 'Failed to fetch user', 500);
     }
   },
 
@@ -175,9 +174,9 @@ module.exports = {
   createUser: async (req, res) => {
     try {
       const data = req.body;
-      return successResponse(res, { user: data }, 201, 'User created');
+      return ResponseHandler.created(res, { user: data }, 'User created');
     } catch (err) {
-      return errorResponse(res, 'Failed to create user', 500);
+      return ResponseHandler.error(res, 'Failed to create user', 500);
     }
   },
 
@@ -186,9 +185,9 @@ module.exports = {
     try {
       const { id } = req.params;
       const data = req.body;
-      return successResponse(res, { user: { id, ...data } }, 200, 'User updated');
+      return ResponseHandler.success(res, { user: { id, ...data } }, 'User updated', 200);
     } catch (err) {
-      return errorResponse(res, 'Failed to update user', 500);
+      return ResponseHandler.error(res, 'Failed to update user', 500);
     }
   },
 
@@ -196,9 +195,9 @@ module.exports = {
   deleteUser: async (req, res) => {
     try {
       const { id } = req.params;
-      return successResponse(res, { id }, 200, 'User deleted');
+      return ResponseHandler.success(res, { id }, 'User deleted', 200);
     } catch (err) {
-      return errorResponse(res, 'Failed to delete user', 500);
+      return ResponseHandler.error(res, 'Failed to delete user', 500);
     }
   },
 };
